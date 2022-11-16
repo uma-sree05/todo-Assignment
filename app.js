@@ -97,7 +97,7 @@ app.get("/todos/", async (request, response) => {
                     todo 
                     WHERE
                     status = '${status}';`;
-      queryCol = "status";
+      queryCol = "Status";
       break;
     case checkScenario2(request.query):
       getDataQuery = `
@@ -107,7 +107,7 @@ app.get("/todos/", async (request, response) => {
                 todo
                 WHERE  
                 priority = '${priority}';`;
-      queryCol = "priority";
+      queryCol = "Priority";
       break;
     case checkScenario3(request.query):
       getDataQuery = `
@@ -116,15 +116,15 @@ app.get("/todos/", async (request, response) => {
                 FROM 
                 todo
                 WHERE priority = '${priority}' AND status = '${status}';`;
-      queryCol = "priority and status";
+      queryCol = "Priority and Status";
       break;
     case checkScenario4(request.query):
       getDataQuery = `SELECT * FROM todo WHERE todo LIKE '%${search_q}%';`;
-      queryCol = "todo";
+      queryCol = "Todo";
       break;
     case checkScenario5(request.query):
       getDataQuery = `SELECT * FROM todo WHERE category = '${category}' AND status = '${status}';`;
-      queryCol = "category and status";
+      queryCol = "Category and Status";
       break;
     case checkScenario6(request.query):
       getDataQuery = `SELECT * FROM todo WHERE category = '${category}';`;
@@ -132,7 +132,7 @@ app.get("/todos/", async (request, response) => {
       break;
     case checkScenario7(request.query):
       getDataQuery = `SELECT * FROM todo WHERE  category = '${category}' AND priority = '${priority}';`;
-      queryCol = "category and priority";
+      queryCol = "Category and Priority";
       break;
     default:
       getDataQuery = `
@@ -181,21 +181,43 @@ app.get("/agenda/", async (request, response) => {
     response.send(todoItemList);
   } else {
     response.status(400);
-    response.send(`Invalid Due Date`);
+    response.send("Invalid Due Date");
   }
 });
 
 // POST todo API 4
 app.post("/todos/", async (request, response) => {
   const { id, todo, priority, status, category, dueDate } = request.body;
-  const postTodoQuery = `
+  const prior = validatePriority(priority);
+  const stat = validateStatus(status);
+  const cat = validateCategory(category);
+  const date = validateDuedate(dueDate);
+  if (prior === true && stat === true && cat === true && date === true) {
+    const postTodoQuery = `
     INSERT INTO 
     todo(id,todo,priority,status,category,due_date) 
     VALUES(
     '${id}','${todo}','${priority}','${status}','${category}','${dueDate}');`;
-  await db.run(postTodoQuery);
-  console.log(postTodoQuery);
-  response.send("Todo Successfully Added");
+    await db.run(postTodoQuery);
+    console.log(postTodoQuery);
+    response.send("Todo Successfully Added");
+  } else {
+    let value = "";
+    response.status(400);
+    if (prior === false) {
+      value = "Todo Priority";
+    }
+    if (stat === false) {
+      value = "Todo Status";
+    }
+    if (cat === false) {
+      value = "Todo Category";
+    }
+    if (date === false) {
+      value = "Due Date";
+    }
+    response.send(`Invalid ${value}`);
+  }
 });
 
 // PUT todo API 5
